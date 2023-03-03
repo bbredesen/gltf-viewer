@@ -1,0 +1,7 @@
+github.com/bbredesen/go-vk v0.0.0-20230217143317-ce5fce0dc2f2 h1:SMl4R+b6VUxH++Gq+scz/ja4ArxaN62lLIRRWEEpddc=
+github.com/bbredesen/go-vk v0.0.0-20230217143317-ce5fce0dc2f2/go.mod h1:l9a11qk7n4n9II8cpccUG2JwtxOq9O6py5ixRnbFE2c=
+github.com/chewxy/math32 v1.10.1 h1:LFpeY0SLJXeaiej/eIp2L40VYfscTvKh/FSEZ68uMkU=
+github.com/chewxy/math32 v1.10.1/go.mod h1:dOB2rcuFrCn6UHrze36WSLVPKtzPMRAQvBvUwkSsLqs=
+golang.org/x/sys v0.0.0-20200909081042-eff7692f9009/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.4.0 h1:Zr2JFtRQNX3BCZ8YtxRE9hNJYC8J6I1MVbMg6owUp18=
+golang.org/x/sys v0.4.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
