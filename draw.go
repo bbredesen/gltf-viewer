@@ -76,7 +76,7 @@ func defaultCamera() vkm.Mat {
 
 		return vkm.GlTFOrthoProjection(xmag, ymag, znear, zfar).MultM(vkm.Camera(eye, look, up))
 	} else {
-		return vkm.GlTFPerspective(2*math32.Pi*(60.0/360.0), 1, 1, 10000).MultM(vkm.LookAt(vkm.NewPt(200, 300, 200), vkm.Origin(), vkm.UnitVecY()))
+		return vkm.GlTFPerspective(2*math32.Pi*(60.0/360.0), 1, 1, 10000).MultM(vkm.LookAt(vkm.NewPt(2, 3, 2), vkm.Origin(), vkm.UnitVecY()))
 	}
 }
 
