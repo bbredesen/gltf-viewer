@@ -224,9 +224,9 @@ func (vp *VulkanPipeline) CreateGraphicsPipelines() {
 		},
 	}
 
-	r, p := vk.CreatePipelineLayout(vp.ctx.Device, &pipelineLayoutCreateInfo, nil)
-	if r != vk.SUCCESS {
-		panic(r)
+	p, err := vk.CreatePipelineLayout(vp.ctx.Device, &pipelineLayoutCreateInfo, nil)
+	if err != nil {
+		panic(err)
 	}
 	vp.pipelineLayout = p
 
@@ -249,13 +249,13 @@ func (vp *VulkanPipeline) CreateGraphicsPipelines() {
 		Subpass:    0,
 	}
 
-	if r, gp := vk.CreateGraphicsPipelines(
+	if gp, err := vk.CreateGraphicsPipelines(
 		vp.ctx.Device,
 		0, // vk.NULL_HANDLE missing
 		[]vk.GraphicsPipelineCreateInfo{pipelineCreateInfo},
 		nil,
-	); r != vk.SUCCESS {
-		panic(r)
+	); err != nil {
+		panic(err)
 	} else {
 		vp.graphicsPipeline = gp[0]
 	}
@@ -342,9 +342,9 @@ func (vp *VulkanPipeline) CreateRenderPass() {
 		PDependencies: []vk.SubpassDependency{dependencyToColor},
 	}
 
-	var r vk.Result
-	if r, vp.renderPass = vk.CreateRenderPass(vp.ctx.Device, &renderPassCreateInfo, nil); r != vk.SUCCESS {
-		panic(r)
+	var err error
+	if vp.renderPass, err = vk.CreateRenderPass(vp.ctx.Device, &renderPassCreateInfo, nil); err != nil {
+		panic(err)
 	}
 }
 
@@ -361,9 +361,9 @@ func (vp *VulkanPipeline) CreateFramebuffers() {
 			Layers:       1,
 		}
 
-		r, fb := vk.CreateFramebuffer(vp.ctx.Device, &framebufferCreateInfo, nil)
-		if r != vk.SUCCESS {
-			panic(r)
+		fb, err := vk.CreateFramebuffer(vp.ctx.Device, &framebufferCreateInfo, nil)
+		if err != nil {
+			panic(err)
 		}
 		vp.ctx.SwapChainFramebuffers[i] = fb
 	}
@@ -422,8 +422,8 @@ func (vp *VulkanPipeline) createShaderModule(filename string) vk.ShaderModule {
 		smCI.PCode = (*uint32)(unsafe.Pointer(&dat[0]))
 	}
 
-	if r, mod := vk.CreateShaderModule(vp.ctx.Device, &smCI, nil); r != vk.SUCCESS {
-		panic(r)
+	if mod, err := vk.CreateShaderModule(vp.ctx.Device, &smCI, nil); err != nil {
+		panic(err)
 	} else {
 		return mod
 	}

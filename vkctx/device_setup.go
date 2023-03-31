@@ -22,10 +22,10 @@ func (ctx *Context) createInstance() {
 		PpEnabledLayerNames:     ctx.EnableApiLayers,
 	}
 
-	var r vk.Result
-	if r, ctx.Instance = vk.CreateInstance(&icInfo, nil); r != vk.SUCCESS {
+	var err error
+	if ctx.Instance, err = vk.CreateInstance(&icInfo, nil); err != nil {
 		fmt.Println("Could not create instance!")
-		panic(r.String())
+		panic(err.Error())
 	}
 }
 
@@ -35,18 +35,17 @@ func (app *Context) createSurface(hInstance windows.Handle, hWnd windows.HWND) {
 		Hwnd:      hWnd,
 	}
 
-	var r vk.Result
-	r, app.Surface = vk.CreateWin32SurfaceKHR(app.Instance, &ci, nil)
-	if r != vk.SUCCESS {
-		fmt.Printf("Could not create surface!\n")
-		panic(r)
+	var err error
+	app.Surface, err = vk.CreateWin32SurfaceKHR(app.Instance, &ci, nil)
+	if err != nil {
+		panic("Could not create surface: " + err.Error())
 	}
 }
 
 func (app *Context) selectPhysicalDevice() {
-	r, devices := vk.EnumeratePhysicalDevices(app.Instance)
-	if r != vk.SUCCESS {
-		panic("Could not enumerate physical devices: " + r.String())
+	devices, err := vk.EnumeratePhysicalDevices(app.Instance)
+	if err != nil {
+		panic("Could not enumerate physical devices: " + err.Error())
 	}
 
 	for _, dev := range devices {
@@ -88,9 +87,9 @@ func (app *Context) isDeviceSuitable(device vk.PhysicalDevice) bool {
 }
 
 func (app *Context) checkDeviceExtensionSupport(device vk.PhysicalDevice) bool {
-	r, devExtensions := vk.EnumerateDeviceExtensionProperties(device, "")
-	if r != vk.SUCCESS {
-		panic(r.String() + ": Could not enumerate device extension properties!")
+	devExtensions, err := vk.EnumerateDeviceExtensionProperties(device, "")
+	if err != nil {
+		panic(err.Error() + ": Could not enumerate device extension properties!")
 	}
 
 	foundProps := make(map[string]bool, len(app.EnableDeviceExtensions))
@@ -122,9 +121,9 @@ func (app *Context) analyzeQueueFamilies(device vk.PhysicalDevice) queueFamIndic
 		if (p.QueueFlags & vk.QUEUE_GRAPHICS_BIT) != 0 {
 			inds.graphicsIndex.Set(uint32(i))
 		}
-		r, surf := vk.GetPhysicalDeviceSurfaceSupportKHR(device, uint32(i), app.Surface)
-		if r != vk.SUCCESS {
-			panic(r)
+		surf, err := vk.GetPhysicalDeviceSurfaceSupportKHR(device, uint32(i), app.Surface)
+		if err != nil {
+			panic(err)
 		}
 
 		if surf {
@@ -194,11 +193,11 @@ func (app *Context) createLogicalDevice() {
 	createInfo.PNext = unsafe.Pointer(f2.Vulkanize())
 	createInfo.PEnabledFeatures = nil
 
-	r, device := vk.CreateDevice(app.PhysicalDevice, &createInfo, nil)
+	device, err := vk.CreateDevice(app.PhysicalDevice, &createInfo, nil)
 
-	if r != vk.SUCCESS {
-		fmt.Printf("Logical device creation failed! (%s)\n", r.String())
-		panic(r)
+	if err != nil {
+		fmt.Printf("Logical device creation failed! (%s)\n", err.Error())
+		panic(err)
 	}
 	app.Device = device
 

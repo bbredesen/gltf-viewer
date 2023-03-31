@@ -87,10 +87,10 @@ func (ctx *Context) CreateImage(extent vk.Extent2D, format vk.Format, tiling vk.
 		Samples:             vk.SAMPLE_COUNT_1_BIT,
 	}
 
-	var r vk.Result
+	var err error
 
-	if r, image = vk.CreateImage(ctx.Device, &imageCI, nil); r != vk.SUCCESS {
-		panic("Could not create image: " + r.String())
+	if image, err = vk.CreateImage(ctx.Device, &imageCI, nil); err != nil {
+		panic("Could not create image: " + err.Error())
 	}
 
 	memReq := vk.GetImageMemoryRequirements(ctx.Device, image)
@@ -99,12 +99,12 @@ func (ctx *Context) CreateImage(extent vk.Extent2D, format vk.Format, tiling vk.
 		MemoryTypeIndex: ctx.FindMemoryType(memReq.MemoryTypeBits, memProps),
 	}
 
-	if r, imageMemory = vk.AllocateMemory(ctx.Device, &memAlloc, nil); r != vk.SUCCESS {
-		panic("Could not allocate memory for texture image: " + r.String())
+	if imageMemory, err = vk.AllocateMemory(ctx.Device, &memAlloc, nil); err != nil {
+		panic("Could not allocate memory for texture image: " + err.Error())
 	}
 
-	if r := vk.BindImageMemory(ctx.Device, image, imageMemory, 0); r != vk.SUCCESS {
-		panic("Could not bind texture image memory: " + r.String())
+	if err = vk.BindImageMemory(ctx.Device, image, imageMemory, 0); err != nil {
+		panic("Could not bind texture image memory: " + err.Error())
 	}
 
 	return
@@ -124,8 +124,8 @@ func (ctx *Context) CreateImageView(image vk.Image, format vk.Format, aspectMask
 		},
 	}
 
-	if r, iv := vk.CreateImageView(ctx.Device, &ivCI, nil); r != vk.SUCCESS {
-		panic("Could not create image view: " + r.String())
+	if iv, err := vk.CreateImageView(ctx.Device, &ivCI, nil); err != nil {
+		panic("Could not create image view: " + err.Error())
 	} else {
 		return iv
 	}

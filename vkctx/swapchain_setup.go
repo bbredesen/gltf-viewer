@@ -26,23 +26,23 @@ func (ctx *Context) createSwapchain() {
 	*/
 
 	// 1) General capabilities
-	r, surfaceCapabilities := vk.GetPhysicalDeviceSurfaceCapabilitiesKHR(ctx.PhysicalDevice, ctx.Surface)
-	if r != vk.SUCCESS {
-		panic("Could not get device surface capabilities: " + r.String())
+	surfaceCapabilities, err := vk.GetPhysicalDeviceSurfaceCapabilitiesKHR(ctx.PhysicalDevice, ctx.Surface)
+	if err != nil {
+		panic("Could not get device surface capabilities: " + err.Error())
 	}
 
 	// 2) Image formats
-	r, surfaceFormats := vk.GetPhysicalDeviceSurfaceFormatsKHR(
+	surfaceFormats, err := vk.GetPhysicalDeviceSurfaceFormatsKHR(
 		ctx.PhysicalDevice, ctx.Surface,
 	)
-	if r != vk.SUCCESS {
-		panic("Could not get device surface formats: " + r.String())
+	if err != nil {
+		panic("Could not get device surface formats: " + err.Error())
 	}
 
 	// 3) Supported present modes
-	r, presentModes := vk.GetPhysicalDeviceSurfacePresentModesKHR(ctx.PhysicalDevice, ctx.Surface)
-	if r != vk.SUCCESS {
-		panic("Could not get device surface present modes: " + r.String())
+	presentModes, err := vk.GetPhysicalDeviceSurfacePresentModesKHR(ctx.PhysicalDevice, ctx.Surface)
+	if err != nil {
+		panic("Could not get device surface present modes: " + err.Error())
 	}
 
 	// 4) Decide on swapchain size
@@ -138,20 +138,20 @@ func (ctx *Context) createSwapchain() {
 		Clipped:          true,
 	}
 
-	r, swapchain := vk.CreateSwapchainKHR(ctx.Device, &createInfo, nil)
-	if r != vk.SUCCESS {
+	swapchain, err := vk.CreateSwapchainKHR(ctx.Device, &createInfo, nil)
+	if err != nil {
 		fmt.Printf("Failed to create swapchain!")
-		panic(r)
+		panic(err)
 	}
 	ctx.Swapchain = swapchain
 	ctx.SwapchainImageFormat = selectedSurfaceFormat.Format
 	ctx.SwapchainExtent = selectedExtent
 
 	// 10) Finally, get the swapchain images and save them
-	r, images := vk.GetSwapchainImagesKHR(ctx.Device, ctx.Swapchain)
-	if r != vk.SUCCESS {
+	images, err := vk.GetSwapchainImagesKHR(ctx.Device, ctx.Swapchain)
+	if err != nil {
 		fmt.Printf("Could not get images after createing swapchain!\n")
-		panic(r)
+		panic(err)
 	}
 	ctx.SwapchainImages = images
 
@@ -197,8 +197,8 @@ func (app *Context) cleanupSwapchain() {
 }
 
 func (app *Context) recreateSwapchain() {
-	if r := vk.DeviceWaitIdle(app.Device); r != vk.SUCCESS {
-		panic(r)
+	if err := vk.DeviceWaitIdle(app.Device); err != nil {
+		panic(err)
 	}
 
 	app.cleanupSwapchain()
@@ -221,8 +221,8 @@ func (app *Context) createImageView(image vk.Image, format vk.Format, aspectMask
 		},
 	}
 
-	if r, iv := vk.CreateImageView(app.Device, &ivCI, nil); r != vk.SUCCESS {
-		panic("Could not create image view: " + r.String())
+	if iv, err := vk.CreateImageView(app.Device, &ivCI, nil); err != nil {
+		panic("Could not create image view: " + err.Error())
 	} else {
 		return iv
 	}

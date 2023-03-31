@@ -41,10 +41,10 @@ func (app *App) createBuffer(usage vk.BufferUsageFlags, size vk.DeviceSize, memP
 		SharingMode: vk.SHARING_MODE_EXCLUSIVE,
 	}
 
-	var r vk.Result
+	var err error
 
-	if r, buffer = vk.CreateBuffer(app.Device, &bufferCI, nil); r != vk.SUCCESS {
-		panic("Could not create buffer: " + r.String())
+	if buffer, err = vk.CreateBuffer(app.Device, &bufferCI, nil); err != nil {
+		panic("Could not create buffer: " + err.Error())
 	}
 
 	memReq := vk.GetBufferMemoryRequirements(app.Device, buffer)
@@ -54,11 +54,11 @@ func (app *App) createBuffer(usage vk.BufferUsageFlags, size vk.DeviceSize, memP
 		MemoryTypeIndex: uint32(app.FindMemoryType(memReq.MemoryTypeBits, memProps)), //vk.MEMORY_PROPERTY_HOST_VISIBLE_BIT|vk.MEMORY_PROPERTY_HOST_COHERENT_BIT)),
 	}
 
-	if r, memory = vk.AllocateMemory(app.Device, &memAllocInfo, nil); r != vk.SUCCESS {
-		panic("Could not allocate memory for buffer: " + r.String())
+	if memory, err = vk.AllocateMemory(app.Device, &memAllocInfo, nil); err != nil {
+		panic("Could not allocate memory for buffer: " + err.Error())
 	}
-	if r := vk.BindBufferMemory(app.Device, buffer, memory, 0); r != vk.SUCCESS {
-		panic("Could not bind memory for buffer: " + r.String())
+	if err = vk.BindBufferMemory(app.Device, buffer, memory, 0); err != nil {
+		panic("Could not bind memory for buffer: " + err.Error())
 	}
 
 	return
@@ -85,7 +85,7 @@ func (app *App) loadGlTF(doc *gltf.ResolvedGlTF) error {
 
 	for _, cam := range doc.Cameras {
 		if cam.Type == gltf.PERSPECTIVE {
-			app.cameras = append(app.cameras, vkm.Perspective(cam.Perspective.Yfov, cam.Perspective.AspectRatio, cam.Perspective.Znear, cam.Perspective.Zfar))
+			app.cameras = append(app.cameras, vkm.GlTFPerspective(cam.Perspective.Yfov, cam.Perspective.AspectRatio, cam.Perspective.Znear, cam.Perspective.Zfar))
 		} else if cam.Type == gltf.ORTHOGRAPHIC {
 			app.cameras = append(app.cameras, vkm.GlTFOrthoProjection(cam.Orthographic.Xmag, cam.Orthographic.Ymag, cam.Orthographic.Znear, cam.Orthographic.Zfar))
 		}
@@ -97,14 +97,14 @@ func (app *App) loadGlTF(doc *gltf.ResolvedGlTF) error {
 	}
 
 	// TODO (Temporarily) override everything with the default camera
-	app.cameras = []vkm.Mat{defaultCamera()}
+	// app.cameras = []vkm.Mat{defaultCamera()}
 
 	for _, docBuf := range doc.Buffers {
 		vkBuf, bufMem := app.createBuffer(vk.BUFFER_USAGE_VERTEX_BUFFER_BIT|vk.BUFFER_USAGE_INDEX_BUFFER_BIT, vk.DeviceSize(docBuf.ByteLength), vk.MEMORY_PROPERTY_DEVICE_LOCAL_BIT|vk.MEMORY_PROPERTY_HOST_COHERENT_BIT)
-		r, ptr := vk.MapMemory(app.Device, bufMem, 0, vk.DeviceSize(docBuf.ByteLength), 0)
-		if r != vk.SUCCESS {
+		ptr, err := vk.MapMemory(app.Device, bufMem, 0, vk.DeviceSize(docBuf.ByteLength), 0)
+		if err != nil {
 			vk.DestroyBuffer(app.Device, vkBuf, nil)
-			return errors.New("failed to map memory for buffer, result code was " + r.String())
+			return errors.New("failed to map memory for buffer, result code was " + err.Error())
 		}
 
 		vk.MemCopySlice(unsafe.Pointer(ptr), docBuf.Data)

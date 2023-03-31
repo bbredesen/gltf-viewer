@@ -51,9 +51,9 @@ func NewApp() *App {
 }
 
 func (app *App) Initialize() {
-	app.winapp.ClassName = "ttf-renderer"
+	app.winapp.ClassName = "gltf-viewer"
 	app.winapp.Width, app.winapp.Height = 800, 800
-	app.winapp.Initialize("ttf-renderer")
+	app.winapp.Initialize("gltf-viewer")
 
 	app.EnableApiLayers = append(app.EnableApiLayers, "VK_LAYER_KHRONOS_validation")
 	app.EnableInstanceExtensions = app.winapp.GetRequiredInstanceExtensions()
@@ -77,13 +77,13 @@ func (app *App) Teardown() {
 func (app *App) drawFrame() {
 	vk.WaitForFences(app.ctx.Device, []vk.Fence{app.ctx.InFlightFence}, true, ^uint64(0))
 
-	var r vk.Result
-	if r, app.currentImage = vk.AcquireNextImageKHR(app.ctx.Device, app.ctx.Swapchain, ^uint64(0), app.ctx.ImageAvailableSemaphore, vk.Fence(vk.NULL_HANDLE)); r != vk.SUCCESS {
-		if r == vk.SUBOPTIMAL_KHR || r == vk.ERROR_OUT_OF_DATE_KHR {
+	var err error
+	if app.currentImage, err = vk.AcquireNextImageKHR(app.ctx.Device, app.ctx.Swapchain, ^uint64(0), app.ctx.ImageAvailableSemaphore, vk.Fence(vk.NULL_HANDLE)); err != nil {
+		if err == vk.SUBOPTIMAL_KHR || err == vk.ERROR_OUT_OF_DATE_KHR {
 			// app.vp.recreateSwapchain()
 			return
 		} else {
-			panic("Could not acquire next image! " + r.String())
+			panic("Could not acquire next image! " + err.Error())
 		}
 	}
 
@@ -103,8 +103,8 @@ func (app *App) drawFrame() {
 		PSignalSemaphores: []vk.Semaphore{app.ctx.RenderFinishedSemaphore},
 	}
 
-	if r := vk.QueueSubmit(app.ctx.GraphicsQueue, []vk.SubmitInfo{submitInfo}, app.ctx.InFlightFence); r != vk.SUCCESS {
-		panic("Could not submit to graphics queue! " + r.String())
+	if err := vk.QueueSubmit(app.ctx.GraphicsQueue, []vk.SubmitInfo{submitInfo}, app.ctx.InFlightFence); err != nil {
+		panic("Could not submit to graphics queue! " + err.Error())
 	}
 
 	// Present the drawn image
@@ -114,8 +114,8 @@ func (app *App) drawFrame() {
 		PImageIndices:   []uint32{app.currentImage},
 	}
 
-	if r := vk.QueuePresentKHR(app.ctx.PresentQueue, &presentInfo); r != vk.SUCCESS && r != vk.SUBOPTIMAL_KHR && r != vk.ERROR_OUT_OF_DATE_KHR {
-		panic("Could not submit to presentation queue! " + r.String())
+	if r := vk.QueuePresentKHR(app.ctx.PresentQueue, &presentInfo); err != nil && r != vk.SUBOPTIMAL_KHR && r != vk.ERROR_OUT_OF_DATE_KHR {
+		panic("Could not submit to presentation queue! " + err.Error())
 	}
 
 }
@@ -292,6 +292,12 @@ func (n *SceneNode) ApplyTransform(txfm vkm.Mat) {
 const _modelPCOffset = uint32(unsafe.Sizeof(vkm.Mat{}))
 
 func (app *App) RenderNode(n *SceneNode, cb vk.CommandBuffer) {
+	if n.ModelNode != nil && n.ModelNode.Camera != nil {
+		projViewMat := n.ModelNode.Camera.ProjMatrix.MultM(n.CurrentTransform)
+		// This won't work as is...need to put projection in a bound uniform buffer before executing the command buffer
+		vk.CmdPushConstants(cb, app.pipelineLayout, vk.SHADER_STAGE_VERTEX_BIT, 0, projViewMat.AsBytes())
+	}
+
 	// self render...
 	vk.CmdPushConstants(cb, app.pipelineLayout, vk.SHADER_STAGE_VERTEX_BIT, _modelPCOffset, n.CurrentTransform.AsBytes())
 

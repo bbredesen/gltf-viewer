@@ -12,9 +12,9 @@ func (ctx *Context) createCommandPool() {
 		Flags:            vk.COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
 		QueueFamilyIndex: ctx.PresentQueueFamilyIndex,
 	}
-	r, commandPool := vk.CreateCommandPool(ctx.Device, &poolCreateInfo, nil)
-	if r != vk.SUCCESS {
-		panic("Could not create command pool! " + r.String())
+	commandPool, err := vk.CreateCommandPool(ctx.Device, &poolCreateInfo, nil)
+	if err != nil {
+		panic("Could not create command pool! " + err.Error())
 	}
 	ctx.CommandPool = commandPool
 
@@ -24,9 +24,9 @@ func (ctx *Context) createCommandPool() {
 		Level:              vk.COMMAND_BUFFER_LEVEL_PRIMARY,
 		CommandBufferCount: uint32(len(ctx.SwapchainImages)),
 	}
-	r, commandBuffers := vk.AllocateCommandBuffers(ctx.Device, &allocInfo)
-	if r != vk.SUCCESS {
-		panic("Could not allocate command buffers! " + r.String())
+	commandBuffers, err := vk.AllocateCommandBuffers(ctx.Device, &allocInfo)
+	if err != nil {
+		panic("Could not allocate command buffers! " + err.Error())
 	}
 	ctx.CommandBuffers = commandBuffers
 }
@@ -39,23 +39,23 @@ func (ctx *Context) destroyCommandPool() {
 func (ctx *Context) createSyncObjects() {
 	createInfo := vk.SemaphoreCreateInfo{}
 
-	r, imgSem := vk.CreateSemaphore(ctx.Device, &createInfo, nil)
-	if r != vk.SUCCESS {
-		panic("Could not create semaphore! " + r.String())
+	imgSem, err := vk.CreateSemaphore(ctx.Device, &createInfo, nil)
+	if err != nil {
+		panic("Could not create semaphore! " + err.Error())
 	}
 	ctx.ImageAvailableSemaphore = imgSem
 
-	r, renSem := vk.CreateSemaphore(ctx.Device, &createInfo, nil)
-	if r != vk.SUCCESS {
-		panic("Could not create semaphore! " + r.String())
+	renSem, err := vk.CreateSemaphore(ctx.Device, &createInfo, nil)
+	if err != nil {
+		panic("Could not create semaphore! " + err.Error())
 	}
 	ctx.RenderFinishedSemaphore = renSem
 
 	fenceCreateInfo := vk.FenceCreateInfo{
 		Flags: vk.FENCE_CREATE_SIGNALED_BIT,
 	}
-	if r, ctx.InFlightFence = vk.CreateFence(ctx.Device, &fenceCreateInfo, nil); r != vk.SUCCESS {
-		panic("Could not create fence! " + r.String())
+	if ctx.InFlightFence, err = vk.CreateFence(ctx.Device, &fenceCreateInfo, nil); err != nil {
+		panic("Could not create fence! " + err.Error())
 	}
 }
 
@@ -73,38 +73,38 @@ func (app *Context) BeginOneTimeCommands() vk.CommandBuffer {
 		CommandBufferCount: 1,
 	}
 
-	var r vk.Result
+	var err error
 	var bufs []vk.CommandBuffer
 
-	if r, bufs = vk.AllocateCommandBuffers(app.Device, &bufferAlloc); r != vk.SUCCESS {
-		panic("Could not allocate one-time command buffer: " + r.String())
+	if bufs, err = vk.AllocateCommandBuffers(app.Device, &bufferAlloc); err != nil {
+		panic("Could not allocate one-time command buffer: " + err.Error())
 	}
 
 	cbbInfo := vk.CommandBufferBeginInfo{
 		Flags: vk.COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
 	}
 
-	if r := vk.BeginCommandBuffer(bufs[0], &cbbInfo); r != vk.SUCCESS {
-		panic("Could not begin recording one-time command buffer: " + r.String())
+	if err = vk.BeginCommandBuffer(bufs[0], &cbbInfo); err != nil {
+		panic("Could not begin recording one-time command buffer: " + err.Error())
 	}
 
 	return bufs[0]
 }
 
 func (app *Context) EndOneTimeCommands(buf vk.CommandBuffer) {
-	if r := vk.EndCommandBuffer(buf); r != vk.SUCCESS {
-		panic("Could not end one-time command buffer: " + r.String())
+	if err := vk.EndCommandBuffer(buf); err != nil {
+		panic("Could not end one-time command buffer: " + err.Error())
 	}
 
 	submitInfo := vk.SubmitInfo{
 		PCommandBuffers: []vk.CommandBuffer{buf},
 	}
 
-	if r := vk.QueueSubmit(app.GraphicsQueue, []vk.SubmitInfo{submitInfo}, vk.Fence(vk.NULL_HANDLE)); r != vk.SUCCESS {
-		panic("Could not submit one-time command buffer: " + r.String())
+	if err := vk.QueueSubmit(app.GraphicsQueue, []vk.SubmitInfo{submitInfo}, vk.Fence(vk.NULL_HANDLE)); err != nil {
+		panic("Could not submit one-time command buffer: " + err.Error())
 	}
-	if r := vk.QueueWaitIdle(app.GraphicsQueue); r != vk.SUCCESS {
-		panic("QueueWaitIdle failed: " + r.String())
+	if err := vk.QueueWaitIdle(app.GraphicsQueue); err != nil {
+		panic("QueueWaitIdle failed: " + err.Error())
 	}
 
 	vk.FreeCommandBuffers(app.Device, app.CommandPool, []vk.CommandBuffer{buf})
