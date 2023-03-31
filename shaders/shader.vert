@@ -28,7 +28,8 @@ void main() {
     
     gl_Position = pc.proj*pc.model*vec4(inPosition, 1.0);
     
-    vec3 lightVec = normalize(vec3(3,1,2) - inPosition);
+    // Static light
+    vec3 lightVec = normalize(vec3(500,300,500) - inPosition);
     float ndotl = dot(inNormal, lightVec);
 
     vec4 baseColor = vec4(0.5,0.5,0.5,1); //vec4(abs(inNormal),1.0);
